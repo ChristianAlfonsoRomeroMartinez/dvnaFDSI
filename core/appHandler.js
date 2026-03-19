@@ -9,14 +9,28 @@ const Op = db.Sequelize.Op
 function isValidHost(host) {
   if (!host || typeof host !== 'string') return false
   host = host.trim()
+  if (!host || host.startsWith('-')) {
+    return false
+  }
   // IPv4
   var ipv4 = /^(\d{1,3}\.){3}\d{1,3}$/
   if (ipv4.test(host)) {
-    return host.split('.').every(o => parseInt(o,10) >= 0 && parseInt(o,10) <= 255)
+    return host.split('.').every(function (o) {
+      var n = parseInt(o, 10)
+      return n >= 0 && n <= 255
+    })
   }
-  // Simple hostname validation (letters, digits, hyphen, dot)
+  // Hostname validation with RFC-compliant labels
   var hostname = /^[a-zA-Z0-9.-]+$/
-  return hostname.test(host) && host.length <= 253
+  if (!hostname.test(host) || host.length > 253) {
+    return false
+  }
+  var labels = host.split('.')
+  return labels.every(function (label) {
+    if (!label || label.length > 63) return false
+    // must start and end with alphanumeric, may contain hyphens in the middle
+    return /^[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?$/.test(label)
+  })
 }
 
 module.exports.userSearch = function (req, res) {
@@ -53,7 +67,7 @@ module.exports.ping = function (req, res) {
   const safeEnv = Object.assign({}, process.env)
   safeEnv.PATH = '/usr/bin:/bin'
   // use absolute ping path and sanitized env to avoid executing unexpected binaries
-  execFile('/bin/ping', ['-c','2', address], { env: safeEnv, windowsHide: true }, function (err, stdout, stderr) {
+  execFile('/bin/ping', ['-c','2','--', address], { env: safeEnv, windowsHide: true }, function (err, stdout, stderr) {
     var output = ''
     if (err && err.code !== 0) {
       output = (stdout || '') + (stderr || '') + '\nError: ' + (err.message || '')
