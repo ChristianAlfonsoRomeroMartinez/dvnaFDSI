@@ -50,7 +50,9 @@ module.exports.ping = function (req, res) {
     req.flash('warning', 'Invalid address')
     return res.render('app/ping', { output: 'Invalid address' })
   }
-  execFile('ping', ['-c','2', address], function (err, stdout, stderr) {
+  const safeEnv = Object.assign({}, process.env)
+  safeEnv.PATH = '/usr/bin:/bin'
+  execFile('ping', ['-c','2', address], { env: safeEnv, windowsHide: true }, function (err, stdout, stderr) {
     var output = ''
     if (err && err.code !== 0) {
       output = (stdout || '') + (stderr || '') + '\nError: ' + (err.message || '')

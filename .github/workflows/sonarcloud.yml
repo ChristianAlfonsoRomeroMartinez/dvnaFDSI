@@ -26,10 +26,11 @@ jobs:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
         run: |
           docker run --rm \
+            -e SONAR_TOKEN="$SONAR_TOKEN" \
             -v "${{ github.workspace }}":/usr/src \
             -w /usr/src \
             sonarsource/sonar-scanner-cli:latest \
-            -Dsonar.login="${{ secrets.SONAR_TOKEN }}" \
+            -Dsonar.login="$SONAR_TOKEN" \
             -Dsonar.organization="christianalfonsoromeromartinez-1" \
             -Dsonar.projectKey="ChristianAlfonsoRomeroMartinez_dvnaFDSI" \
             -Dsonar.sources=. \
