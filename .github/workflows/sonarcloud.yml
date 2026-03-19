@@ -27,10 +27,16 @@ jobs:
       - name: Run tests (optional)
         run: npm test || true
 
-      - name: SonarCloud Scan
-        uses: SonarSource/sonarcloud-github-action@v1
-        with:
-          organization: 'christianalfonsoromeromartinez-1'
-          projectKey: 'ChristianAlfonsoRomeroMartinez_dvnaFDSI'
+      - name: SonarCloud Scan (docker sonar-scanner-cli)
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}":/usr/src \
+            -w /usr/src \
+            sonarsource/sonar-scanner-cli:latest \
+            -Dsonar.login="${{ secrets.SONAR_TOKEN }}" \
+            -Dsonar.organization="christianalfonsoromeromartinez-1" \
+            -Dsonar.projectKey="ChristianAlfonsoRomeroMartinez_dvnaFDSI" \
+            -Dsonar.sources=. \
+            -Dsonar.exclusions="node_modules/**,public/**,docs/**,**/*.md"
