@@ -21,12 +21,6 @@ jobs:
         with:
           node-version: 18
 
-      - name: Install dependencies
-        run: npm install
-
-      - name: Run tests (optional)
-        run: npm test || true
-
       - name: SonarCloud Scan (docker sonar-scanner-cli)
         env:
           SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}
