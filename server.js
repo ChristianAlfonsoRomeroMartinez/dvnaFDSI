@@ -6,6 +6,7 @@ var ejs = require('ejs')
 var morgan = require('morgan')
 const fileUpload = require('express-fileupload');
 var config = require('./config/server')
+const crypto = require('crypto')
 
 //Initialize Express
 var app = express()
@@ -20,8 +21,12 @@ app.use(fileUpload());
 // app.set('trust proxy', 1) 
 
 // Intialize Session
+const sessionSecret = process.env.SESSION_SECRET || config.sessionSecret || crypto.randomBytes(32).toString('hex')
+if (!process.env.SESSION_SECRET && !config.sessionSecret) {
+  console.warn('Warning: SESSION_SECRET not set. Using generated secret. Set SESSION_SECRET in production.')
+}
 app.use(session({
-  secret: 'keyboard cat',
+  secret: sessionSecret,
   resave: true,
   saveUninitialized: true,
   cookie: { secure: false }
