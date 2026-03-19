@@ -52,7 +52,8 @@ module.exports.ping = function (req, res) {
   }
   const safeEnv = Object.assign({}, process.env)
   safeEnv.PATH = '/usr/bin:/bin'
-  execFile('ping', ['-c','2', address], { env: safeEnv, windowsHide: true }, function (err, stdout, stderr) {
+  // use absolute ping path and sanitized env to avoid executing unexpected binaries
+  execFile('/bin/ping', ['-c','2', address], { env: safeEnv, windowsHide: true }, function (err, stdout, stderr) {
     var output = ''
     if (err && err.code !== 0) {
       output = (stdout || '') + (stderr || '') + '\nError: ' + (err.message || '')
@@ -161,8 +162,15 @@ module.exports.userEditSubmit = function (req, res) {
 
 module.exports.redirect = function (req, res) {
   var url = req.query && req.query.url ? req.query.url.toString() : ''
-  // Allow only internal relative paths starting with single '/'
-  if (url && url.startsWith('/') && !url.startsWith('//')) {
+  // Allow only a small whitelist of internal paths to avoid open redirect
+  const allowedRedirects = [
+    '/',
+    '/app/products',
+    '/app/login',
+    '/app/useredit',
+    '/app/ping'
+  ]
+  if (url && allowedRedirects.includes(url)) {
     res.redirect(url)
   } else {
     res.send('invalid redirect url')
