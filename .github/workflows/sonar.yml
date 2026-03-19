@@ -1,0 +1,38 @@
+name: SonarQube Scan
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    types: [opened, synchronize, reopened]
+
+jobs:
+  sonar-scan:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 16
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Run Sonar Scanner (Docker)
+        env:
+          SONAR_TOKEN: ${{ secrets.SONAR_TOKEN }}            # required
+          SONAR_HOST_URL: ${{ secrets.SONAR_HOST_URL }}      # optional (leave empty for SonarCloud)
+          SONAR_PROJECT_KEY: ${{ secrets.SONAR_PROJECT_KEY }}# recommended (or set in sonar-project.properties)
+        run: |
+          docker run --rm \
+            -v "${{ github.workspace }}":/usr/src \
+            -w /usr/src \
+            sonarsource/sonar-scanner-cli:latest \
+            -Dsonar.login="${SONAR_TOKEN}" \
+            -Dsonar.projectKey="${SONAR_PROJECT_KEY}" \
+            -Dsonar.sources="." \
+            -Dsonar.exclusions="node_modules/**,public/**,docs/**" \
+            ${SONAR_HOST_URL:+-Dsonar.host.url="${SONAR_HOST_URL}"}
